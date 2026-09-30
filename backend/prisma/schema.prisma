@@ -1,0 +1,371 @@
+// ============================================================
+// Prisma Schema — Istilham Career Platform
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ────────────────────────────────────────────────────────────
+// Enums
+// ────────────────────────────────────────────────────────────
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum SkillIndicator {
+  problemSolving
+  analyticalThinking
+  decisionMaking
+  creativity
+  communication
+  leadership
+  persistence
+  timeManagement
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+enum SessionStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+enum ActivityType {
+  ASSESSMENT
+  SIMULATION
+  RECOMMENDATION
+  PROFILE_UPDATE
+}
+
+enum SimulationDifficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+// ────────────────────────────────────────────────────────────
+// User & Authentication
+// ────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  name         String   @db.VarChar(255)
+  email        String   @unique @db.VarChar(320)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  role         Role     @default(STUDENT)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  studentProfile    StudentProfile?
+  behavioralProfile BehavioralProfile?
+  assessmentAttempts AssessmentAttempt[]
+  simulationSessions SimulationSession[]
+  simulationResults  SimulationResult[]
+  activityLogs       ActivityLog[]
+
+  @@map("users")
+}
+
+// ────────────────────────────────────────────────────────────
+// Student Profile
+// ────────────────────────────────────────────────────────────
+
+model StudentProfile {
+  id               String    @id @default(cuid())
+  userId           String    @unique @map("user_id")
+  dateOfBirth      DateTime? @map("date_of_birth") @db.Date
+  educationLevel   String?   @map("education_level") @db.VarChar(255)
+  school           String?   @db.VarChar(255)
+  city             String?   @db.VarChar(255)
+  profileCompletion Int      @default(0) @map("profile_completion")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("student_profiles")
+}
+
+// ────────────────────────────────────────────────────────────
+// Careers
+// ────────────────────────────────────────────────────────────
+
+model Career {
+  id             String   @id @default(cuid())
+  slug           String   @unique @db.VarChar(100)
+  nameAr         String   @map("name_ar") @db.VarChar(255)
+  descriptionAr  String   @map("description_ar") @db.Text
+  aboutAr        String   @map("about_ar") @db.Text
+  icon           String   @db.VarChar(100)
+  requiredSkills String[] @map("required_skills")
+  traits         String[]
+  jobs           String[]
+  growthSkills   String[] @map("growth_skills")
+  nextSteps      String[] @map("next_steps")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  weights     CareerWeight[]
+  simulations Simulation[]
+
+  @@map("careers")
+}
+
+model CareerWeight {
+  id        String         @id @default(cuid())
+  careerId  String         @map("career_id")
+  indicator SkillIndicator
+  weight    Float          @default(0)
+
+  career Career @relation(fields: [careerId], references: [id], onDelete: Cascade)
+
+  @@unique([careerId, indicator])
+  @@map("career_weights")
+}
+
+// ────────────────────────────────────────────────────────────
+// Assessments
+// ────────────────────────────────────────────────────────────
+
+model Assessment {
+  id          String   @id @default(cuid())
+  titleAr     String   @map("title_ar") @db.VarChar(255)
+  descriptionAr String @map("description_ar") @db.Text
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  questions AssessmentQuestion[]
+  attempts  AssessmentAttempt[]
+
+  @@map("assessments")
+}
+
+model AssessmentQuestion {
+  id           String         @id @default(cuid())
+  assessmentId String         @map("assessment_id")
+  skill        SkillIndicator
+  sectionAr    String         @map("section_ar") @db.VarChar(255)
+  textAr       String         @map("text_ar") @db.Text
+  orderIndex   Int            @map("order_index") @default(0)
+  createdAt    DateTime       @default(now()) @map("created_at")
+
+  assessment Assessment       @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  options    AssessmentOption[]
+  answers    AssessmentAnswer[]
+
+  @@map("assessment_questions")
+}
+
+model AssessmentOption {
+  id         String   @id @default(cuid())
+  questionId String   @map("question_id")
+  textAr     String   @map("text_ar") @db.Text
+  value      Int
+  orderIndex Int      @map("order_index") @default(0)
+
+  question AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answers  AssessmentAnswer[]
+
+  @@map("assessment_options")
+}
+
+model AssessmentAttempt {
+  id           String        @id @default(cuid())
+  studentId    String        @map("student_id")
+  assessmentId String        @map("assessment_id")
+  status       AttemptStatus @default(IN_PROGRESS)
+  startedAt    DateTime      @default(now()) @map("started_at")
+  completedAt  DateTime?     @map("completed_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  student    User               @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  assessment Assessment         @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  answers    AssessmentAnswer[]
+
+  @@map("assessment_attempts")
+}
+
+model AssessmentAnswer {
+  id         String   @id @default(cuid())
+  attemptId  String   @map("attempt_id")
+  questionId String   @map("question_id")
+  optionId   String   @map("option_id")
+  answeredAt DateTime @default(now()) @map("answered_at")
+
+  attempt  AssessmentAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  option   AssessmentOption   @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, questionId])
+  @@map("assessment_answers")
+}
+
+// ────────────────────────────────────────────────────────────
+// Behavioral Profile (aggregated skill scores)
+// ────────────────────────────────────────────────────────────
+
+model BehavioralProfile {
+  id                 String   @id @default(cuid())
+  userId             String   @unique @map("user_id")
+  problemSolving     Float    @default(0) @map("problem_solving")
+  analyticalThinking Float    @default(0) @map("analytical_thinking")
+  decisionMaking     Float    @default(0) @map("decision_making")
+  creativity         Float    @default(0)
+  communication      Float    @default(0)
+  leadership         Float    @default(0)
+  persistence        Float    @default(0)
+  timeManagement     Float    @default(0) @map("time_management")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("behavioral_profiles")
+}
+
+// ────────────────────────────────────────────────────────────
+// Simulations
+// ────────────────────────────────────────────────────────────
+
+model Simulation {
+  id              String               @id @default(cuid())
+  slug            String               @unique @db.VarChar(100)
+  careerId        String               @map("career_id")
+  titleAr         String               @map("title_ar") @db.VarChar(255)
+  descriptionAr   String               @map("description_ar") @db.Text
+  difficulty      SimulationDifficulty @default(INTERMEDIATE)
+  durationMinutes Int                  @map("duration_minutes") @default(20)
+  introAr         String               @map("intro_ar") @db.Text
+  isActive        Boolean              @default(true) @map("is_active")
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+
+  career     Career              @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  challenges SimulationChallenge[]
+  sessions   SimulationSession[]
+  results    SimulationResult[]
+
+  @@map("simulations")
+}
+
+model SimulationChallenge {
+  id           String   @id @default(cuid())
+  simulationId String   @map("simulation_id")
+  orderIndex   Int      @map("order_index") @default(0)
+  situationAr  String   @map("situation_ar") @db.Text
+  questionAr   String   @map("question_ar") @db.Text
+  hintAr       String   @map("hint_ar") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  simulation Simulation        @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+  options    ChallengeOption[]
+  attempts   ChallengeAttempt[]
+
+  @@map("simulation_challenges")
+}
+
+model ChallengeOption {
+  id          String   @id @default(cuid())
+  challengeId String   @map("challenge_id")
+  textAr      String   @map("text_ar") @db.Text
+  quality     Int      @default(3)
+  orderIndex  Int      @map("order_index") @default(0)
+
+  challenge SimulationChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  attempts  ChallengeAttempt[]
+
+  @@map("challenge_options")
+}
+
+model SimulationSession {
+  id           String        @id @default(cuid())
+  studentId    String        @map("student_id")
+  simulationId String        @map("simulation_id")
+  status       SessionStatus @default(IN_PROGRESS)
+  startedAt    DateTime      @default(now()) @map("started_at")
+  completedAt  DateTime?     @map("completed_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  student    User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  simulation Simulation       @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+  attempts   ChallengeAttempt[]
+  result     SimulationResult?
+
+  @@map("simulation_sessions")
+}
+
+model ChallengeAttempt {
+  id              String   @id @default(cuid())
+  sessionId       String   @map("session_id")
+  challengeId     String   @map("challenge_id")
+  optionId        String   @map("option_id")
+  responseSeconds Float    @map("response_seconds")
+  attempts        Int      @default(1)
+  changedDecision Boolean  @default(false) @map("changed_decision")
+  usedHint        Boolean  @default(false) @map("used_hint")
+  correct         Boolean  @default(false)
+  recordedAt      DateTime @default(now()) @map("recorded_at")
+
+  session   SimulationSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  challenge SimulationChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  option    ChallengeOption     @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, challengeId])
+  @@map("challenge_attempts")
+}
+
+model SimulationResult {
+  id               String   @id @default(cuid())
+  sessionId        String   @unique @map("session_id")
+  studentId        String   @map("student_id")
+  simulationId     String   @map("simulation_id")
+  careerId         String   @map("career_id")
+  summaryAr        String   @map("summary_ar") @db.Text
+  totalTimeMinutes Int      @map("total_time_minutes")
+  correctAnswers   Int      @map("correct_answers")
+  totalChallenges  Int      @map("total_challenges")
+  // JSON object: { problemSolving: number, analyticalThinking: number, ... }
+  indicators       Json
+  completedAt      DateTime @default(now()) @map("completed_at")
+
+  session    SimulationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student    User              @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  simulation Simulation        @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+
+  @@map("simulation_results")
+}
+
+// ────────────────────────────────────────────────────────────
+// Activity Log
+// ────────────────────────────────────────────────────────────
+
+model ActivityLog {
+  id        String       @id @default(cuid())
+  studentId String       @map("student_id")
+  type      ActivityType
+  titleAr   String       @map("title_ar") @db.VarChar(500)
+  detailAr  String       @map("detail_ar") @db.VarChar(500)
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, createdAt(sort: Desc)])
+  @@map("activity_logs")
+}

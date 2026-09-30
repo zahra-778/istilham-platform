@@ -1,0 +1,881 @@
+{
+	"info": {
+		"_postman_id": "8a3e7b1a-9f42-4b8c-a1d2-e5f8a9c3d4e6",
+		"name": "Istilham (استلهام) API - Full Collection",
+		"description": "مجموعة طلبات Postman الشاملة لاختبار كافة واجهات برمجة التطبيقات (APIs) لمنصة استلهام للتوجيه والمحاكاة المهنية.\n\nتتضمن المجموعة نصوص اختبار (Test Scripts) تقوم تلقائياً بحفظ الرموز (Tokens) والمعرفات (Attempt ID, Session ID) في متغيرات البيئة.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:4000",
+			"type": "string"
+		},
+		{
+			"key": "student_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "admin_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "career_id",
+			"value": "software-engineering",
+			"type": "string"
+		},
+		{
+			"key": "assessment_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "attempt_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "simulation_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "session_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "challenge_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "student_id",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "00 - Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/health",
+					"host": ["{{base_url}}"],
+					"path": ["health"]
+				},
+				"description": "فحص حالة الخادم"
+			},
+			"response": []
+		},
+		{
+			"name": "01 - Authentication (المصادقة)",
+			"item": [
+				{
+					"name": "1. Register Student (إنشاء حساب طالب)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const res = pm.response.json();",
+									"    if (res.data && res.data.token) {",
+									"        pm.collectionVariables.set('student_token', res.data.token);",
+									"        pm.collectionVariables.set('student_id', res.data.user.id);",
+									"        console.log('Student Token Saved:', res.data.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"سارة أحمد\",\n  \"email\": \"sara.student@example.com\",\n  \"password\": \"Password123!\",\n  \"educationLevel\": \"ثانوي\",\n  \"school\": \"ثانوية الرياض الأولى\",\n  \"city\": \"الرياض\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/register",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "register"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. Login Student (تسجيل دخول طالب)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const res = pm.response.json();",
+									"    if (res.data && res.data.token) {",
+									"        pm.collectionVariables.set('student_token', res.data.token);",
+									"        pm.collectionVariables.set('student_id', res.data.user.id);",
+									"        console.log('Student Token Updated:', res.data.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"sara.student@example.com\",\n  \"password\": \"Password123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3. Login Admin (تسجيل دخول مسؤول)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const res = pm.response.json();",
+									"    if (res.data && res.data.token) {",
+									"        pm.collectionVariables.set('admin_token', res.data.token);",
+									"        console.log('Admin Token Saved:', res.data.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@istilham.sa\",\n  \"password\": \"Admin@1234!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4. Get Current User (GET /me)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{student_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/auth/me",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "me"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5. Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{student_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/auth/logout",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "logout"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "02 - Student Profile & Dashboard (الملف واللوحة)",
+			"item": [
+				{
+					"name": "1. Get Student Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{student_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/students/me",
+							"host": ["{{base_url}}"],
+							"path": ["api", "students", "me"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. Update Student Profile",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{student_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"سارة أحمد المطيري\",\n  \"educationLevel\": \"جامعي - سنة أولى\",\n  \"school\": \"جامعة الملك سعود\",\n  \"city\": \"الرياض\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/students/me",
+							"host": ["{{base_url}}"],
+							"path": ["api", "students", "me"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3. Get Student Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{student_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/students/me/dashboard",
+							"host": ["{{base_url}}"],
+							"path": ["api", "students", "me", "dashboard"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "03 - Careers (المهن والمسارات)",
+			"item": [
+				{
+					"name": "1. List All Careers",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const res = pm.response.json();",
+									"    if (res.data && res.data.length > 0) {",
+									"        pm.collectionVariables.set('career_id', res.data[0].id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/careers",
+							"host": ["{{base_url}}"],
+							"path": ["api", "careers"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. Get Career By ID or Slug",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/careers/{{career_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "careers", "{{career_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3. [Admin] Create New Career",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"slug\": \"ai-engineer\",\n  \"nameAr\": \"هندسة الذكاء الاصطناعي\",\n  \"descriptionAr\": \"تطوير وبناء نماذج الذكاء الاصطناعي وتعلم الآلة.\",\n  \"aboutAr\": \"مهنة متقدمة تركز على تدريب النماذج اللغوية، ومعالجة اللغات، والأنظمة الذكية.\",\n  \"icon\": \"Brain\",\n  \"requiredSkills\": [\"بايثون\", \"تعلم الآلة\", \"الرياضيات الإحصائية\", \"التعلم العميق\"],\n  \"traits\": [\"تفكير تحليلي عالي\", \"شغف بالبحث\", \"حل المشكلات المعقدة\"],\n  \"jobs\": [\"مهندس ذكاء اصطناعي\", \"باحث تعلم آلة\", \"مهندس بيانات ضخمة\"],\n  \"growthSkills\": [\"MLOps\", \"Fine-Tuning\", \"الرؤية الحاسوبية\"],\n  \"nextSteps\": [\"دراسة علوم الحاسب أو الرياضيات\", \"المشاركة في مسابقات Kaggle\"],\n  \"weights\": {\n    \"problemSolving\": 0.35,\n    \"analyticalThinking\": 0.30,\n    \"decisionMaking\": 0.15,\n    \"persistence\": 0.10,\n    \"creativity\": 0.10\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/careers",
+							"host": ["{{base_url}}"],
+							"path": ["api", "careers"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4. [Admin] Update Career",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"descriptionAr\": \"تطوير وبناء نماذج الذكاء الاصطناعي وتعلم الآلة والأنظمة التوليدية.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/careers/{{career_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "careers", "{{career_id}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "04 - Assessments (التقييم المبدئي)",
+			"item": [
+				{
+					"name": "1. List Assessments",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const res = pm.response.json();",
+									"    if (res.data && res.data.length > 0) {",
+									"        pm.collectionVariables.set('assessment_id', res.data[0].id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/assessments",
+							"host": ["{{base_url}}"],
+							"path": ["api", "assessments"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. Get Assessment Detail (with Questions)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/assessments/{{assessment_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "assessments", "{{assessment_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3. Start Assessment Attempt",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const res = pm.response.json();",
+									"    if (res.data && res.data.id) {",
+									"        pm.collectionVariables.set('attempt_id', res.data.id);",
+									"        console.log('Assessment Attempt ID Saved:', res.data.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{student_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/assessments/{{assessment_id}}/start",
+							"host": ["{{base_url}}"],
+							"path": ["api", "assessments", "{{assessment_id}}", "start"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4. Submit Question Answer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{student_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"questionId\": \"q-problem-1\",\n  \"optionId\": \"opt-prob-5\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/assessments/attempts/{{attempt_id}}/answer",
+							"host": ["{{base_url}}"],
+							"path": ["api", "assessments", "attempts", "{{attempt_id}}", "answer"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5. Complete Assessment Attempt",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{student_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/assessments/attempts/{{attempt_id}}/complete",
+							"host": ["{{base_url}}"],
+							"path": ["api", "assessments", "attempts", "{{attempt_id}}", "complete"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "6. Get Assessment Result",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{student_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/assessments/attempts/{{attempt_id}}/result",
+							"host": ["{{base_url}}"],
+							"path": ["api", "assessments", "attempts", "{{attempt_id}}", "result"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "05 - Career Simulations (المحاكاة المهنية)",
+			"item": [
+				{
+					"name": "1. List All Simulations",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const res = pm.response.json();",
+									"    if (res.data && res.data.length > 0) {",
+									"        pm.collectionVariables.set('simulation_id', res.data[0].id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/simulations",
+							"host": ["{{base_url}}"],
+							"path": ["api", "simulations"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. Get Simulation Detail",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const res = pm.response.json();",
+									"    if (res.data && res.data.challenges && res.data.challenges.length > 0) {",
+									"        pm.collectionVariables.set('challenge_id', res.data.challenges[0].id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/simulations/{{simulation_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "simulations", "{{simulation_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3. Start Simulation Session",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const res = pm.response.json();",
+									"    if (res.data && res.data.id) {",
+									"        pm.collectionVariables.set('session_id', res.data.id);",
+									"        console.log('Simulation Session ID Saved:', res.data.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{student_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/simulations/{{simulation_id}}/start",
+							"host": ["{{base_url}}"],
+							"path": ["api", "simulations", "{{simulation_id}}", "start"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4. Record Challenge Attempt Decision",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{student_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"optionId\": \"opt-se-1-1\",\n  \"responseSeconds\": 14.5,\n  \"attempts\": 1,\n  \"changedDecision\": false,\n  \"usedHint\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/simulations/sessions/{{session_id}}/challenges/{{challenge_id}}/attempt",
+							"host": ["{{base_url}}"],
+							"path": ["api", "simulations", "sessions", "{{session_id}}", "challenges", "{{challenge_id}}", "attempt"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5. Complete Simulation Session",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{student_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/simulations/sessions/{{session_id}}/complete",
+							"host": ["{{base_url}}"],
+							"path": ["api", "simulations", "sessions", "{{session_id}}", "complete"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "6. Get Simulation Session Result",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{student_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/simulations/sessions/{{session_id}}/result",
+							"host": ["{{base_url}}"],
+							"path": ["api", "simulations", "sessions", "{{session_id}}", "result"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "06 - Recommendations (التوصيات والمطابقة)",
+			"item": [
+				{
+					"name": "1. Get Personalized Career Recommendations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{student_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/recommendations",
+							"host": ["{{base_url}}"],
+							"path": ["api", "recommendations"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. Get Specific Career Match Analysis",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{student_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/recommendations/career-match/{{career_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "recommendations", "career-match", "{{career_id}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "07 - Behavioral Analytics (السلوك والتحليلات)",
+			"item": [
+				{
+					"name": "1. Track Behavioral Event",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{student_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"SIMULATION\",\n  \"titleAr\": \"استعراض تفاصيل محاكاة الأمن السيبراني\",\n  \"detailAr\": \"قام الطالب بتصفح تحديات المحاكاة وقراءة المتطلبات.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/behavior/events",
+							"host": ["{{base_url}}"],
+							"path": ["api", "behavior", "events"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. Get Student Behavioral Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{student_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/behavior/profile",
+							"host": ["{{base_url}}"],
+							"path": ["api", "behavior", "profile"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "08 - Admin Panel (لوحة الإدارة)",
+			"item": [
+				{
+					"name": "1. [Admin] Get Platform Analytics & Stats",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/admin/stats",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "stats"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. [Admin] List All Students",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/admin/students",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "students"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3. [Admin] Update Student Account Status",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"isActive\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/students/{{student_id}}/status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "students", "{{student_id}}", "status"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4. [Admin] Check AI Microservice Health",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/admin/ai-health",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "ai-health"]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
