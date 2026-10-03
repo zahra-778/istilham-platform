@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import {
   User,
@@ -55,7 +55,19 @@ export const Route = createFileRoute("/profile")({
 });
 
 export function ProfilePage() {
-  const currentUser = authService.getCurrentUser();
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => authService.getCurrentUser());
+
+  useEffect(() => {
+    const handleUserUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent<AuthUser | null>;
+      setCurrentUser(customEvent.detail ?? authService.getCurrentUser());
+    };
+    window.addEventListener("istilham-user-updated", handleUserUpdated);
+    return () => {
+      window.removeEventListener("istilham-user-updated", handleUserUpdated);
+    };
+  }, []);
+
   const isAdmin = currentUser?.role === "admin";
   const homeCrumb = isAdmin
     ? { label: "لوحة تحكم الإدارة", to: "/admin" }
@@ -97,14 +109,16 @@ function AdminProfileView({
   const [name, setName] = useState(currentUser.name);
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    setName(currentUser.name);
+  }, [currentUser.name]);
+
   const handleSaveAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await studentsService.updateProfile({ name });
-      // Update local storage user
-      const updatedUser = { ...currentUser, name };
-      localStorage.setItem("istilham_user", JSON.stringify(updatedUser));
+      await studentsService.updateProfile({ name: name.trim() });
+      authService.updateLocalUser({ name: name.trim() });
       toast.success("تم تحديث بيانات المسؤول بنجاح");
       setIsEditOpen(false);
     } catch (err: any) {
@@ -346,6 +360,7 @@ function StudentProfileView({
     enabled: Boolean(currentUser && currentUser.role !== "admin"),
   });
 
+  const queryClient = useQueryClient();
   const student = studentQuery.data;
 
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -373,11 +388,14 @@ function StudentProfileView({
     setSaving(true);
     try {
       await studentsService.updateProfile({
-        name: formData.name,
-        educationLevel: formData.stage,
-        city: formData.city,
+        name: formData.name.trim(),
+        educationLevel: formData.stage.trim(),
+        city: formData.city.trim(),
       });
+      authService.updateLocalUser({ name: formData.name.trim() });
       toast.success("تم تحديث بيانات الملف الشخصي بنجاح!");
+      await queryClient.invalidateQueries({ queryKey: ["studentProfile"] });
+      await queryClient.invalidateQueries({ queryKey: ["student"] });
       await studentQuery.refetch();
       setIsEditOpen(false);
     } catch (err: any) {

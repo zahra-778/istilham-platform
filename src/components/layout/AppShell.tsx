@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/shared/Logo";
 import { authService } from "@/services/mockAuth";
+import type { AuthUser } from "@/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -52,7 +53,19 @@ export function AppShell({
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const currentUser = authService.getCurrentUser();
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => authService.getCurrentUser());
+
+  // Listen to profile/user updates in realtime
+  useEffect(() => {
+    const handleUserUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent<AuthUser | null>;
+      setCurrentUser(customEvent.detail ?? authService.getCurrentUser());
+    };
+    window.addEventListener("istilham-user-updated", handleUserUpdated);
+    return () => {
+      window.removeEventListener("istilham-user-updated", handleUserUpdated);
+    };
+  }, []);
 
   const filteredNavItems =
     currentUser?.role === "admin" ? adminNavItems : studentNavItems;

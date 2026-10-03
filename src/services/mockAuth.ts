@@ -68,6 +68,16 @@ export const authService = {
     return raw ? (JSON.parse(raw) as AuthUser) : null;
   },
 
+  updateLocalUser(updatedFields: Partial<AuthUser>): AuthUser | null {
+    if (typeof window === "undefined") return null;
+    const current = this.getCurrentUser();
+    if (!current) return null;
+    const updated = { ...current, ...updatedFields };
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated));
+    window.dispatchEvent(new CustomEvent("istilham-user-updated", { detail: updated }));
+    return updated;
+  },
+
   async logout(): Promise<void> {
     try {
       await request("/auth/logout", { method: "POST" });
@@ -75,6 +85,10 @@ export const authService = {
       // Ignore network errors on logout
     } finally {
       removeToken();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("istilham-user-updated", { detail: null }));
+      }
     }
   },
 };
+
