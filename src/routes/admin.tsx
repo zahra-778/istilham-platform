@@ -39,6 +39,7 @@ import {
 import { AppShell } from "@/components/layout/AppShell";
 import { StatCard } from "@/components/shared/StatCard";
 import { LoadingState } from "@/components/shared/States";
+import { RequireAuth } from "@/components/shared/RequireAuth";
 import { adminService } from "@/services/mockAdmin";
 import {
   adminCrudService,
@@ -65,10 +66,10 @@ export const Route = createFileRoute("/admin")({
 // ─── Constants ──────────────────────────────────────────────────────────────
 const CHART_COLORS = ["#0D9488", "#14B8A6", "#5EEAD4", "#0F172A", "#64748B", "#94A3B8"];
 const TABS = [
-  { id: "analytics", label: "الإحصائيات", icon: BarChart3 },
-  { id: "careers", label: "التخصصات", icon: Briefcase },
-  { id: "simulations", label: "المحاكاة", icon: Gamepad2 },
-  { id: "students", label: "الطلاب", icon: Users },
+  { id: "careers", label: "إدارة التخصصات", icon: Briefcase },
+  { id: "simulations", label: "إدارة المحاكاة", icon: Gamepad2 },
+  { id: "students", label: "إدارة الطلاب", icon: Users },
+  { id: "analytics", label: "الإحصائيات والنمو", icon: BarChart3 },
 ] as const;
 type TabId = typeof TABS[number]["id"];
 
@@ -1224,70 +1225,93 @@ function AnalyticsTab() {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 function AdminDashboardPage() {
-  const navigate = useNavigate();
-  const currentUser = authService.getCurrentUser();
-  const [activeTab, setActiveTab] = useState<TabId>("analytics");
+  const [activeTab, setActiveTab] = useState<TabId>("careers");
 
-  useEffect(() => {
-    if (!currentUser) {
-      toast.error("يرجى تسجيل الدخول بحساب مسؤول");
-      navigate({ to: "/login" });
-    } else if (currentUser.role !== "admin") {
-      toast.error("عذراً، هذه الصفحة مخصصة للمسؤولين فقط");
-      navigate({ to: "/dashboard" });
-    }
-  }, [currentUser, navigate]);
-
-  if (!currentUser || currentUser.role !== "admin") {
-    return (
-      <AppShell title="غير مصرح" breadcrumbs={[{ label: "لوحة التحكم", to: "/dashboard" }, { label: "الإدارة" }]}>
-        <div className="card-surface flex flex-col items-center justify-center gap-4 p-12 text-center">
-          <ShieldCheck className="h-12 w-12 text-destructive" />
-          <h2 className="text-lg font-bold text-navy">هذه الصفحة مخصصة لمدراء النظام فقط</h2>
-          <button onClick={() => navigate({ to: "/dashboard" })} className="rounded-xl bg-teal px-5 py-2.5 text-sm font-bold text-primary-foreground hover:bg-turquoise">
-            العودة للوحة الطالب
-          </button>
-        </div>
-      </AppShell>
-    );
-  }
+  const { data: careers = [] } = useQuery({
+    queryKey: ["adminCareers"],
+    queryFn: adminCrudService.getCareers,
+  });
+  const { data: sims = [] } = useQuery({
+    queryKey: ["adminSimulations"],
+    queryFn: adminCrudService.getSimulations,
+  });
+  const { data: students = [] } = useQuery({
+    queryKey: ["adminStudentsList"],
+    queryFn: adminCrudService.getStudents,
+  });
 
   const tabContent: Record<TabId, ReactElement> = {
-    analytics: <AnalyticsTab />,
     careers: <CareersTab />,
     simulations: <SimulationsTab />,
     students: <StudentsTab />,
+    analytics: <AnalyticsTab />,
   };
 
   return (
-    <AppShell
-      title="لوحة تحكم الإدارة"
-      subtitle="إدارة التخصصات والمحاكاة والطلاب ومؤشرات المنصة"
-      breadcrumbs={[{ label: "الرئيسية", to: "/" }, { label: "لوحة الإدارة" }]}
-    >
-      <div className="mx-auto max-w-6xl space-y-6">
-        {/* Tab Bar */}
-        <div className="card-surface flex gap-1 p-1.5">
-          {TABS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              id={`admin-tab-${id}`}
-              onClick={() => setActiveTab(id)}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-xs font-bold transition-all ${
-                activeTab === id
-                  ? "bg-teal text-white shadow-xs"
-                  : "text-muted-foreground hover:bg-accent hover:text-navy"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              <span className="hidden sm:inline">{label}</span>
-            </button>
-          ))}
-        </div>
+    <RequireAuth role="admin">
+      <AppShell
+        title="لوحة تحكم الإدارة"
+        subtitle="إدارة شاملة للتخصصات والمحاكاة والطلاب ومؤشرات المنصة"
+        breadcrumbs={[{ label: "الرئيسية", to: "/" }, { label: "لوحة الإدارة" }]}
+      >
+        <div className="mx-auto max-w-6xl space-y-6">
+          {/* Admin Header Quick Stats Banner */}
+          <div className="card-surface relative overflow-hidden bg-navy p-6 text-white shadow-lg">
+            <div className="pointer-events-none absolute -left-16 -top-16 h-48 w-48 rounded-full bg-teal/20 blur-3xl" />
+            <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-lg bg-teal/20 px-3 py-1 text-xs font-bold text-turquoise mb-2 border border-teal/30">
+                  <ShieldCheck className="h-4 w-4" />
+                  مساحة إدارة النظام (Admin Console)
+                </div>
+                <h2 className="text-xl font-extrabold text-white sm:text-2xl">
+                  مرحباً بك في لوحة تحكم استلهام
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl leading-relaxed">
+                  يمكنك من هنا إضافة وتعديل التخصصات وسيناريوهات المحاكاة التفاعلية، وإدارة حسابات الطلاب ومتابعة إحصائيات المنصة.
+                </p>
+              </div>
 
-        {/* Tab Content */}
-        {tabContent[activeTab]}
-      </div>
-    </AppShell>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="rounded-xl bg-slate-800/80 border border-slate-700/80 px-4 py-2.5 text-center min-w-[100px]">
+                  <p className="text-lg font-extrabold text-turquoise">{toArabicNumber(careers.length)}</p>
+                  <p className="text-[11px] text-slate-300">تخصص مسجل</p>
+                </div>
+                <div className="rounded-xl bg-slate-800/80 border border-slate-700/80 px-4 py-2.5 text-center min-w-[100px]">
+                  <p className="text-lg font-extrabold text-mint">{toArabicNumber(sims.length)}</p>
+                  <p className="text-[11px] text-slate-300">محاكاة نشطة</p>
+                </div>
+                <div className="rounded-xl bg-slate-800/80 border border-slate-700/80 px-4 py-2.5 text-center min-w-[100px]">
+                  <p className="text-lg font-extrabold text-white">{toArabicNumber(students.length)}</p>
+                  <p className="text-[11px] text-slate-300">طالب مسجل</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tab Bar */}
+          <div className="card-surface flex gap-1 p-1.5 shadow-xs border border-border">
+            {TABS.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                id={`admin-tab-${id}`}
+                onClick={() => setActiveTab(id)}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-xs font-bold transition-all ${
+                  activeTab === id
+                    ? "bg-teal text-white shadow-xs"
+                    : "text-muted-foreground hover:bg-accent hover:text-navy"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                <span className="hidden sm:inline">{label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Tab Content */}
+          {tabContent[activeTab]}
+        </div>
+      </AppShell>
+    </RequireAuth>
   );
 }

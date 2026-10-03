@@ -14,6 +14,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { StatCard } from "@/components/shared/StatCard";
 import { SkillBar } from "@/components/shared/SkillBar";
 import { ErrorState, LoadingState } from "@/components/shared/States";
+import { RequireAuth } from "@/components/shared/RequireAuth";
 import { studentsService } from "@/services/mockStudents";
 import { recommendationsService } from "@/services/mockRecommendations";
 import { authService } from "@/services/mockAuth";
@@ -42,17 +43,18 @@ function DashboardPage() {
     }
   }, [user, navigate]);
 
-  const studentQuery = useQuery({ queryKey: ["student"], queryFn: studentsService.getCurrentStudent, enabled: user?.role !== "admin" });
-  const activitiesQuery = useQuery({ queryKey: ["activities"], queryFn: studentsService.getActivities });
-  const rankingQuery = useQuery({ queryKey: ["ranking"], queryFn: recommendationsService.getRanking });
+  const studentQuery = useQuery({ queryKey: ["student"], queryFn: studentsService.getCurrentStudent, enabled: Boolean(user && user.role !== "admin") });
+  const activitiesQuery = useQuery({ queryKey: ["activities"], queryFn: studentsService.getActivities, enabled: Boolean(user) });
+  const rankingQuery = useQuery({ queryKey: ["ranking"], queryFn: recommendationsService.getRanking, enabled: Boolean(user) });
 
   const student = studentQuery.data;
 
   return (
-    <AppShell
-      title="لوحة تحكم الطالب"
-      subtitle="متابعة تقدمك في رحلة الإرشاد المهني"
-      breadcrumbs={[{ label: "الرئيسية", to: "/" }, { label: "لوحة التحكم" }]}
+    <RequireAuth>
+      <AppShell
+        title="لوحة تحكم الطالب"
+        subtitle="متابعة تقدمك في رحلة الإرشاد المهني"
+        breadcrumbs={[{ label: "الرئيسية", to: "/" }, { label: "لوحة التحكم" }]}
       actions={
         <Link
           to="/simulations"
@@ -182,5 +184,6 @@ function DashboardPage() {
         </div>
       )}
     </AppShell>
+    </RequireAuth>
   );
 }

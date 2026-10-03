@@ -20,7 +20,9 @@ import { AppShell } from "@/components/layout/AppShell";
 import { SkillBar } from "@/components/shared/SkillBar";
 import { StatCard } from "@/components/shared/StatCard";
 import { ErrorState, LoadingState } from "@/components/shared/States";
+import { RequireAuth } from "@/components/shared/RequireAuth";
 import { simulationsService } from "@/services/mockSimulations";
+import { authService } from "@/services/mockAuth";
 import { getCareer } from "@/data/careers";
 import { SKILL_LABELS, type SkillKey } from "@/types";
 import { toArabicNumber, toArabicPercent } from "@/utils/format";
@@ -38,6 +40,7 @@ export const Route = createFileRoute("/results/$simulationId")({
 
 function SimulationResultsPage() {
   const { simulationId } = Route.useParams();
+  const user = authService.getCurrentUser();
 
   const {
     data: result,
@@ -46,35 +49,40 @@ function SimulationResultsPage() {
   } = useQuery({
     queryKey: ["simulationResult", simulationId],
     queryFn: () => simulationsService.getResult(simulationId),
+    enabled: Boolean(user),
   });
 
   const career = result ? getCareer(result.careerId) : null;
 
   if (isLoading) {
     return (
-      <AppShell
-        title="نتائج المحاكاة"
-        breadcrumbs={[
-          { label: "المحاكاة المهنية", to: "/simulations" },
-          { label: "جاري تحليل النتائج..." },
-        ]}
-      >
-        <LoadingState label="جاري استخراج المؤشرات السلوكية وتحليل القرارات..." />
-      </AppShell>
+      <RequireAuth>
+        <AppShell
+          title="نتائج المحاكاة"
+          breadcrumbs={[
+            { label: "المحاكاة المهنية", to: "/simulations" },
+            { label: "جاري تحليل النتائج..." },
+          ]}
+        >
+          <LoadingState label="جاري استخراج المؤشرات السلوكية وتحليل القرارات..." />
+        </AppShell>
+      </RequireAuth>
     );
   }
 
   if (isError || !result) {
     return (
-      <AppShell
-        title="تعذر تحميل النتائج"
-        breadcrumbs={[
-          { label: "المحاكاة المهنية", to: "/simulations" },
-          { label: "خطأ" },
-        ]}
-      >
-        <ErrorState description="لم يتم العثور على تقرير نتائج لهذه المحاكاة." />
-      </AppShell>
+      <RequireAuth>
+        <AppShell
+          title="تعذر تحميل النتائج"
+          breadcrumbs={[
+            { label: "المحاكاة المهنية", to: "/simulations" },
+            { label: "خطأ" },
+          ]}
+        >
+          <ErrorState description="لم يتم العثور على تقرير نتائج لهذه المحاكاة." />
+        </AppShell>
+      </RequireAuth>
     );
   }
 
@@ -89,13 +97,14 @@ function SimulationResultsPage() {
   );
 
   return (
-    <AppShell
-      title="التقرير السلوكي للمحاكاة"
-      subtitle={`نتائج أدائك في ${career ? career.name : "المحاكاة المهنية"}`}
-      breadcrumbs={[
-        { label: "المحاكاة المهنية", to: "/simulations" },
-        { label: "تقرير النتائج" },
-      ]}
+    <RequireAuth>
+      <AppShell
+        title="التقرير السلوكي للمحاكاة"
+        subtitle={`نتائج أدائك في ${career ? career.name : "المحاكاة المهنية"}`}
+        breadcrumbs={[
+          { label: "المحاكاة المهنية", to: "/simulations" },
+          { label: "تقرير النتائج" },
+        ]}
       actions={
         <div className="flex items-center gap-2">
           <Link
@@ -292,5 +301,6 @@ function SimulationResultsPage() {
         </section>
       </div>
     </AppShell>
+    </RequireAuth>
   );
 }

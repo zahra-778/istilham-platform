@@ -3,7 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Clock, Layers, Play, Signal } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ErrorState, LoadingState } from "@/components/shared/States";
+import { RequireAuth } from "@/components/shared/RequireAuth";
 import { simulationsService } from "@/services/mockSimulations";
+import { authService } from "@/services/mockAuth";
 import { toArabicNumber, toArabicPercent } from "@/utils/format";
 import { cn } from "@/lib/utils";
 
@@ -26,14 +28,20 @@ const difficultyStyles: Record<string, string> = {
 };
 
 function SimulationsPage() {
-  const { data, isLoading, isError } = useQuery({ queryKey: ["simulations"], queryFn: simulationsService.list });
+  const user = authService.getCurrentUser();
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["simulations"],
+    queryFn: simulationsService.list,
+    enabled: Boolean(user),
+  });
 
   return (
-    <AppShell
-      title="المحاكاة المهنية"
-      subtitle="اختر تخصصًا وعش تجربة عمل واقعية"
-      breadcrumbs={[{ label: "لوحة التحكم", to: "/dashboard" }, { label: "المحاكاة المهنية" }]}
-    >
+    <RequireAuth>
+      <AppShell
+        title="المحاكاة المهنية"
+        subtitle="اختر تخصصًا وعش تجربة عمل واقعية"
+        breadcrumbs={[{ label: "لوحة التحكم", to: "/dashboard" }, { label: "المحاكاة المهنية" }]}
+      >
       {isLoading ? (
         <LoadingState label="جارٍ تحميل المحاكاة المتاحة..." />
       ) : isError || !data ? (
@@ -107,5 +115,6 @@ function SimulationsPage() {
         </div>
       )}
     </AppShell>
+    </RequireAuth>
   );
 }

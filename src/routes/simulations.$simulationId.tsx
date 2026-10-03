@@ -17,8 +17,10 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ErrorState, LoadingState } from "@/components/shared/States";
+import { RequireAuth } from "@/components/shared/RequireAuth";
 import { simulationsService } from "@/services/mockSimulations";
 import { challengesService } from "@/services/mockChallenges";
+import { authService } from "@/services/mockAuth";
 import { toArabicDigits, toArabicNumber, toArabicPercent } from "@/utils/format";
 import { cn } from "@/lib/utils";
 import type { BehaviorEvent } from "@/types";
@@ -37,6 +39,7 @@ export const Route = createFileRoute("/simulations/$simulationId")({
 function SimulationPlayerPage() {
   const { simulationId } = Route.useParams();
   const navigate = useNavigate();
+  const user = authService.getCurrentUser();
 
   const {
     data: simulation,
@@ -45,6 +48,7 @@ function SimulationPlayerPage() {
   } = useQuery({
     queryKey: ["simulation", simulationId],
     queryFn: () => simulationsService.get(simulationId),
+    enabled: Boolean(user),
   });
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -94,29 +98,33 @@ function SimulationPlayerPage() {
 
   if (isLoading) {
     return (
-      <AppShell
-        title="المحاكاة المهنية"
-        breadcrumbs={[
-          { label: "المحاكاة", to: "/simulations" },
-          { label: "جاري التحميل..." },
-        ]}
-      >
-        <LoadingState label="جاري تحضير بيئة المحاكاة التفاعلية..." />
-      </AppShell>
+      <RequireAuth>
+        <AppShell
+          title="المحاكاة المهنية"
+          breadcrumbs={[
+            { label: "المحاكاة", to: "/simulations" },
+            { label: "جاري التحميل..." },
+          ]}
+        >
+          <LoadingState label="جاري تحضير بيئة المحاكاة التفاعلية..." />
+        </AppShell>
+      </RequireAuth>
     );
   }
 
   if (isError || !simulation || !simulation.challenges || simulation.challenges.length === 0) {
     return (
-      <AppShell
-        title="خطأ في المحاكاة"
-        breadcrumbs={[
-          { label: "المحاكاة", to: "/simulations" },
-          { label: "خطأ" },
-        ]}
-      >
-        <ErrorState description="تعذر العثور على بيانات المحاكاة المحددة." />
-      </AppShell>
+      <RequireAuth>
+        <AppShell
+          title="خطأ في المحاكاة"
+          breadcrumbs={[
+            { label: "المحاكاة", to: "/simulations" },
+            { label: "خطأ" },
+          ]}
+        >
+          <ErrorState description="تعذر العثور على بيانات المحاكاة المحددة." />
+        </AppShell>
+      </RequireAuth>
     );
   }
 
@@ -125,15 +133,17 @@ function SimulationPlayerPage() {
 
   if (!currentChallenge) {
     return (
-      <AppShell
-        title="خطأ في المحاكاة"
-        breadcrumbs={[
-          { label: "المحاكاة", to: "/simulations" },
-          { label: "خطأ" },
-        ]}
-      >
-        <ErrorState description="تعذر العثور على بيانات التحدي الحالي." />
-      </AppShell>
+      <RequireAuth>
+        <AppShell
+          title="خطأ في المحاكاة"
+          breadcrumbs={[
+            { label: "المحاكاة", to: "/simulations" },
+            { label: "خطأ" },
+          ]}
+        >
+          <ErrorState description="تعذر العثور على بيانات التحدي الحالي." />
+        </AppShell>
+      </RequireAuth>
     );
   }
 
@@ -224,13 +234,14 @@ function SimulationPlayerPage() {
   };
 
   return (
-    <AppShell
-      title={simulation.title}
-      subtitle={simulation.intro}
-      breadcrumbs={[
-        { label: "المحاكاة المهنية", to: "/simulations" },
-        { label: simulation.title },
-      ]}
+    <RequireAuth>
+      <AppShell
+        title={simulation.title}
+        subtitle={simulation.intro}
+        breadcrumbs={[
+          { label: "المحاكاة المهنية", to: "/simulations" },
+          { label: simulation.title },
+        ]}
       actions={
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-bold text-navy shadow-xs">
@@ -453,5 +464,6 @@ function SimulationPlayerPage() {
         </section>
       </div>
     </AppShell>
+    </RequireAuth>
   );
 }

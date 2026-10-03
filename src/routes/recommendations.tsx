@@ -17,7 +17,9 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ErrorState, LoadingState } from "@/components/shared/States";
+import { RequireAuth } from "@/components/shared/RequireAuth";
 import { recommendationsService } from "@/services/mockRecommendations";
+import { authService } from "@/services/mockAuth";
 import { simulations } from "@/data/simulations";
 import { toArabicNumber, toArabicPercent } from "@/utils/format";
 import { cn } from "@/lib/utils";
@@ -36,9 +38,11 @@ export const Route = createFileRoute("/recommendations")({
 });
 
 function RecommendationsPage() {
+  const user = authService.getCurrentUser();
   const rankingQuery = useQuery({
     queryKey: ["recommendationsRanking"],
     queryFn: recommendationsService.getRanking,
+    enabled: Boolean(user),
   });
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -59,10 +63,11 @@ function RecommendationsPage() {
   const topMatch = items[0];
 
   return (
-    <AppShell
-      title="التوصيات المهنية"
-      subtitle="قائمة مرتبة بأكثر التخصصات توافقًا مع مؤشراتك السلوكية"
-      breadcrumbs={[
+    <RequireAuth>
+      <AppShell
+        title="التوصيات المهنية"
+        subtitle="قائمة مرتبة بأكثر التخصصات توافقًا مع مؤشراتك السلوكية"
+        breadcrumbs={[
         { label: "لوحة التحكم", to: "/dashboard" },
         { label: "التوصيات المهنية" },
       ]}
@@ -277,5 +282,6 @@ function RecommendationsPage() {
         </div>
       )}
     </AppShell>
+    </RequireAuth>
   );
 }
