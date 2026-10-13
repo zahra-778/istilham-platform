@@ -109,6 +109,14 @@ function AdminProfileView({
   const [name, setName] = useState(currentUser.name);
   const [saving, setSaving] = useState(false);
 
+  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
+
   useEffect(() => {
     setName(currentUser.name);
   }, [currentUser.name]);
@@ -128,20 +136,56 @@ function AdminProfileView({
     }
   };
 
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error("كلمة المرور الجديدة وتأكيدها غير متطابقين");
+      return;
+    }
+    if (passwordForm.newPassword.length < 6) {
+      toast.error("كلمة المرور الجديدة يجب ألا تقل عن ٦ أحرف");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await authService.changePassword(
+        passwordForm.currentPassword,
+        passwordForm.newPassword
+      );
+      toast.success("تم تغيير كلمة المرور بنجاح!");
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setIsPasswordOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || "تعذر تغيير كلمة المرور");
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   return (
     <AppShell
       title="الملف الشخصي للمسؤول"
       subtitle="بيانات حساب الإدارة والصلاحيات والنظام"
       breadcrumbs={[homeCrumb, { label: "الملف الشخصي" }]}
       actions={
-        <button
-          type="button"
-          onClick={() => setIsEditOpen(true)}
-          className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-xs font-bold text-navy transition-colors hover:bg-accent shadow-xs"
-        >
-          <Edit3 className="h-3.5 w-3.5 text-teal" />
-          تعديل البيانات
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsPasswordOpen(true)}
+            className="inline-flex items-center gap-2 rounded-xl bg-teal px-4 py-2 text-xs font-bold text-primary-foreground transition-colors hover:bg-turquoise shadow-xs"
+          >
+            <KeyRound className="h-3.5 w-3.5" />
+            تغيير كلمة المرور
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsEditOpen(true)}
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-xs font-bold text-navy transition-colors hover:bg-accent shadow-xs"
+          >
+            <Edit3 className="h-3.5 w-3.5 text-teal" />
+            تعديل البيانات
+          </button>
+        </div>
       }
     >
       <div className="mx-auto max-w-5xl space-y-6">
@@ -279,6 +323,28 @@ function AdminProfileView({
             </div>
           </div>
         </section>
+
+        {/* Security & Password Notice Banner */}
+        <section className="rounded-2xl border border-teal/30 bg-mint-soft/30 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-teal/15 text-teal">
+              <KeyRound className="h-5 w-5" />
+            </span>
+            <div>
+              <h3 className="text-sm font-bold text-navy">أمان الحساب وكلمة المرور المؤقتة</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                يمكنك تحديث كلمة المرور المؤقتة إلى كلمة مرور شخصية جديدة في أي وقت لضمان أمان حساب الإدارة.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsPasswordOpen(true)}
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-navy px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-navy/90"
+          >
+            تغيير كلمة المرور الآن
+          </button>
+        </section>
       </div>
 
       {/* Edit Admin Modal */}
@@ -330,6 +396,70 @@ function AdminProfileView({
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Change Password Modal */}
+      <Dialog open={isPasswordOpen} onOpenChange={setIsPasswordOpen}>
+        <DialogContent className="sm:max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>تغيير كلمة المرور</DialogTitle>
+            <DialogDescription>
+              أدخل كلمة المرور الحالية (المؤقتة) ثم عيّن كلمة المرور الجديدة لحسابك.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleChangePassword} className="space-y-4 py-2">
+            <div>
+              <label className="block text-xs font-bold text-navy mb-1.5">كلمة المرور الحالية (المؤقتة)</label>
+              <input
+                type="password"
+                value={passwordForm.currentPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                className="w-full rounded-xl border border-input bg-background p-2.5 text-sm text-navy focus:border-teal focus:outline-hidden"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-navy mb-1.5">كلمة المرور الجديدة</label>
+              <input
+                type="password"
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                className="w-full rounded-xl border border-input bg-background p-2.5 text-sm text-navy focus:border-teal focus:outline-hidden"
+                placeholder="٦ أحرف أو أكثر"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-navy mb-1.5">تأكيد كلمة المرور الجديدة</label>
+              <input
+                type="password"
+                value={passwordForm.confirmPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                className="w-full rounded-xl border border-input bg-background p-2.5 text-sm text-navy focus:border-teal focus:outline-hidden"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0 mt-4">
+              <button
+                type="button"
+                onClick={() => setIsPasswordOpen(false)}
+                className="rounded-xl border border-border px-4 py-2 text-sm font-bold text-navy hover:bg-accent"
+              >
+                إلغاء
+              </button>
+              <button
+                type="submit"
+                disabled={changingPassword}
+                className="inline-flex items-center gap-2 rounded-xl bg-teal px-5 py-2 text-sm font-bold text-primary-foreground hover:bg-turquoise disabled:opacity-70"
+              >
+                {changingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                تحديث كلمة المرور
+              </button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
@@ -372,6 +502,14 @@ function StudentProfileView({
     email: "",
   });
 
+  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
+
   useEffect(() => {
     if (student) {
       setFormData({
@@ -402,6 +540,32 @@ function StudentProfileView({
       toast.error(err.message || "تعذر حفظ التعديلات");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error("كلمة المرور الجديدة وتأكيدها غير متطابقين");
+      return;
+    }
+    if (passwordForm.newPassword.length < 6) {
+      toast.error("كلمة المرور الجديدة يجب ألا تقل عن ٦ أحرف");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await authService.changePassword(
+        passwordForm.currentPassword,
+        passwordForm.newPassword
+      );
+      toast.success("تم تغيير كلمة المرور بنجاح!");
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setIsPasswordOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || "تعذر تغيير كلمة المرور");
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -443,14 +607,24 @@ function StudentProfileView({
         { label: "الملف الشخصي" },
       ]}
       actions={
-        <button
-          type="button"
-          onClick={() => setIsEditOpen(true)}
-          className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-xs font-bold text-navy transition-colors hover:bg-accent shadow-xs"
-        >
-          <Edit3 className="h-3.5 w-3.5 text-teal" />
-          تعديل البيانات
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsPasswordOpen(true)}
+            className="inline-flex items-center gap-2 rounded-xl bg-teal px-4 py-2 text-xs font-bold text-primary-foreground transition-colors hover:bg-turquoise shadow-xs"
+          >
+            <KeyRound className="h-3.5 w-3.5" />
+            تغيير كلمة المرور
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsEditOpen(true)}
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-xs font-bold text-navy transition-colors hover:bg-accent shadow-xs"
+          >
+            <Edit3 className="h-3.5 w-3.5 text-teal" />
+            تعديل البيانات
+          </button>
+        </div>
       }
     >
       <div className="mx-auto max-w-5xl space-y-6">
@@ -677,6 +851,70 @@ function StudentProfileView({
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 حفظ التعديلات
+              </button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Password Modal */}
+      <Dialog open={isPasswordOpen} onOpenChange={setIsPasswordOpen}>
+        <DialogContent className="sm:max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>تغيير كلمة المرور</DialogTitle>
+            <DialogDescription>
+              أدخل كلمة المرور الحالية ثم عيّن كلمة المرور الجديدة لحسابك.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleChangePassword} className="space-y-4 py-2">
+            <div>
+              <label className="block text-xs font-bold text-navy mb-1.5">كلمة المرور الحالية</label>
+              <input
+                type="password"
+                value={passwordForm.currentPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                className="w-full rounded-xl border border-input bg-background p-2.5 text-sm text-navy focus:border-teal focus:outline-hidden"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-navy mb-1.5">كلمة المرور الجديدة</label>
+              <input
+                type="password"
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                className="w-full rounded-xl border border-input bg-background p-2.5 text-sm text-navy focus:border-teal focus:outline-hidden"
+                placeholder="٦ أحرف أو أكثر"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-navy mb-1.5">تأكيد كلمة المرور الجديدة</label>
+              <input
+                type="password"
+                value={passwordForm.confirmPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                className="w-full rounded-xl border border-input bg-background p-2.5 text-sm text-navy focus:border-teal focus:outline-hidden"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0 mt-4">
+              <button
+                type="button"
+                onClick={() => setIsPasswordOpen(false)}
+                className="rounded-xl border border-border px-4 py-2 text-sm font-bold text-navy hover:bg-accent"
+              >
+                إلغاء
+              </button>
+              <button
+                type="submit"
+                disabled={changingPassword}
+                className="inline-flex items-center gap-2 rounded-xl bg-teal px-5 py-2 text-sm font-bold text-primary-foreground hover:bg-turquoise disabled:opacity-70"
+              >
+                {changingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                تحديث كلمة المرور
               </button>
             </DialogFooter>
           </form>

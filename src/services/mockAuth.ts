@@ -62,6 +62,14 @@ export const authService = {
     return { message: `تم إرسال رابط استعادة كلمة المرور إلى ${email}` };
   },
 
+  async changePassword(currentPassword: string, newPassword: string): Promise<{ message: string }> {
+    return request<{ message: string }>("/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  },
+
+
   getCurrentUser(): AuthUser | null {
     if (typeof window === "undefined") return null;
     const raw = localStorage.getItem(USER_STORAGE_KEY);

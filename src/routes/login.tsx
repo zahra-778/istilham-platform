@@ -19,8 +19,8 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("ahmed@student.sa");
-  const [password, setPassword] = useState("Student@1234!");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [loading, setLoading] = useState(false);
 
@@ -103,45 +103,6 @@ function LoginPage() {
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           تسجيل الدخول
         </button>
-
-        <div className="grid grid-cols-2 gap-2 pt-1">
-          <button
-            type="button"
-            onClick={() => {
-              setEmail("ahmed@student.sa");
-              setPassword("Student@1234!");
-              setErrors({});
-            }}
-            className="rounded-xl border border-teal/30 bg-mint-soft/50 px-3 py-2 text-center text-xs font-bold text-navy transition hover:bg-mint-soft hover:border-teal"
-          >
-            🎓 تعبئة حساب الطالب
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setEmail("admin@istilham.sa");
-              setPassword("Admin@1234!");
-              setErrors({});
-            }}
-            className="rounded-xl border border-navy/20 bg-navy/5 px-3 py-2 text-center text-xs font-bold text-navy transition hover:bg-navy/10 hover:border-navy/40"
-          >
-            🛡️ تعبئة حساب الإدارة
-          </button>
-        </div>
-
-        <div className="space-y-2 rounded-xl bg-card border border-border/80 p-3 text-xs leading-relaxed text-muted-foreground">
-          <p className="flex items-center justify-between">
-            <span className="font-semibold text-navy">🎓 حساب الطالب:</span>
-            <span className="font-mono text-[11px] text-navy font-bold">ahmed@student.sa</span>
-          </p>
-          <p className="flex items-center justify-between border-t border-border/50 pt-1.5">
-            <span className="font-semibold text-navy">🛡️ حساب الإدارة:</span>
-            <span className="font-mono text-[11px] text-navy font-bold">admin@istilham.sa</span>
-          </p>
-          <p className="text-[11px] text-muted-foreground text-center pt-1 border-t border-border/50">
-            كلمة مرور الطالب: <span className="font-mono font-bold text-navy">Student@1234!</span> | الإدارة: <span className="font-mono font-bold text-navy">Admin@1234!</span>
-          </p>
-        </div>
       </form>
     </AuthLayout>
   );
