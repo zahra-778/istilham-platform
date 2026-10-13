@@ -2,9 +2,11 @@
  * Transport layer connected to Istilham Backend REST API
  */
 
-export const API_BASE_URL = "http://localhost:4000/api";
+export const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:4000/api";
 export const TOKEN_STORAGE_KEY = "istilham.token";
 export const USER_STORAGE_KEY = "istilham.session";
+
 
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
