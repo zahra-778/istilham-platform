@@ -23,7 +23,18 @@ export function createApp(): Express {
   app.use(helmet());
   app.use(
     cors({
-      origin: process.env.CORS_ORIGIN || "*",
+      origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps, curl, server-to-server)
+        if (!origin) return callback(null, true);
+        const origins = (process.env.ALLOWED_ORIGINS || process.env.CORS_ORIGIN || "*")
+          .split(",")
+          .map((o) => o.trim())
+          .filter(Boolean);
+        if (origins.includes("*") || origins.includes(origin)) {
+          return callback(null, true);
+        }
+        return callback(null, true);
+      },
       credentials: true,
     })
   );
