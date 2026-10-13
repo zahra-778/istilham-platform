@@ -25,13 +25,16 @@ async function main() {
   console.log("🌱 Starting seed…");
 
   // ── Admin user ─────────────────────────────────────────────
-  const adminPassword = await hashPassword("Admin@1234!");
+  const adminPassword = await hashPassword("Istilham@2026!");
   const admin = await prisma.user.upsert({
-    where: { email: "admin@istilham.sa" },
-    update: {},
+    where: { email: "istilham29@gmail.com" },
+    update: {
+      name: "زهره حسين",
+      role: "ADMIN",
+    },
     create: {
-      name: "منى العتيبي",
-      email: "admin@istilham.sa",
+      name: "زهره حسين",
+      email: "istilham29@gmail.com",
       passwordHash: adminPassword,
       role: "ADMIN",
     },

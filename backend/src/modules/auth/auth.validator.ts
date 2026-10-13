@@ -17,3 +17,11 @@ export const loginSchema = z.object({
     password: z.string().min(1, "كلمة المرور مطلوبة"),
   }),
 });
+
+export const changePasswordSchema = z.object({
+  body: z.object({
+    currentPassword: z.string().min(1, "كلمة المرور الحالية مطلوبة"),
+    newPassword: z.string().min(6, "كلمة المرور الجديدة يجب ألا تقل عن ٦ أحرف"),
+  }),
+});
+

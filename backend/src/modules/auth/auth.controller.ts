@@ -40,4 +40,18 @@ export class AuthController {
       sendError(res, err.message, 404);
     }
   };
+
+  changePassword = async (req: Request, res: Response): Promise<void> => {
+    try {
+      if (!req.user) {
+        sendError(res, "غير مصرح.", 401);
+        return;
+      }
+      const result = await this.service.changePassword(req.user.sub, req.body);
+      sendSuccess(res, result, 200);
+    } catch (err: any) {
+      sendError(res, err.message, 400);
+    }
+  };
 }
+

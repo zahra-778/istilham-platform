@@ -88,4 +88,25 @@ export class AuthService {
       behavioralProfile: user.behavioralProfile,
     };
   }
+
+  async changePassword(
+    userId: string,
+    data: { currentPassword: string; newPassword: string }
+  ) {
+    const user = await this.repo.findById(userId);
+    if (!user) {
+      throw new Error("المستخدم غير موجود.");
+    }
+
+    const isValid = await comparePassword(data.currentPassword, user.passwordHash);
+    if (!isValid) {
+      throw new Error("كلمة المرور الحالية غير صحيحة.");
+    }
+
+    const passwordHash = await hashPassword(data.newPassword);
+    await this.repo.updatePassword(userId, passwordHash);
+
+    return { message: "تم تغيير كلمة المرور بنجاح." };
+  }
 }
+
